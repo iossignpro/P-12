@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iOS Sign - P12签名服务</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #2d2d2d 100%);
+            color: #ffffff;
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 420px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            padding: 35px 30px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #007aff, #5856d6, #ff2d55);
+        }
+        
+        .certificate-icon {
+            width: 90px;
+            height: 90px;
+            background: linear-gradient(135deg, #007aff 0%, #5856d6 100%);
+            border-radius: 18px;
+            margin: 0 auto 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 36px;
+            box-shadow: 0 10px 25px rgba(0, 122, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .certificate-icon::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: rotate(45deg);
+        }
+        
+        .app-name {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #fff, #007aff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+        
+        .app-subtitle {
+            color: #8e8e93;
+            font-size: 16px;
+            margin-bottom: 30px;
+            font-weight: 500;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            background: rgba(0, 122, 255, 0.2);
+            color: #007aff;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 25px;
+            border: 1px solid rgba(0, 122, 255, 0.3);
+        }
+        
+        .info-card {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 25px;
+            text-align: left;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .info-card h3 {
+            color: #007aff;
+            margin-bottom: 12px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+        }
+        
+        .info-card h3 i {
+            margin-right: 10px;
+            font-size: 16px;
+        }
+        
+        .info-card p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .feature-list {
+            list-style: none;
+            margin-top: 15px;
+        }
+        
+        .feature-list li {
+            padding: 8px 0;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .feature-list li i {
+            color: #30d158;
+            margin-right: 10px;
+            font-size: 12px;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 18px;
+            border: none;
+            border-radius: 14px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #007aff 0%, #5856d6 100%);
+            color: white;
+            box-shadow: 0 8px 20px rgba(0, 122, 255, 0.3);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.12);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px rgba(0, 122, 255, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn i {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+        
+        .wechat-tip {
+            background: rgba(7, 193, 96, 0.15);
+            border: 1px solid rgba(7, 193, 96, 0.3);
+            padding: 16px;
+            border-radius: 14px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .wechat-tip.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .wechat-tip h3 {
+            color: #07c160;
+            margin-bottom: 8px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+        }
+        
+        .wechat-tip h3 i {
+            margin-right: 8px;
+        }
+        
+        .wechat-tip p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .url-display {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 16px;
+            border-radius: 14px;
+            margin: 20px 0;
+            word-break: break-all;
+            font-family: 'SF Mono', Monaco, Menlo, monospace;
+            font-size: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: none;
+            color: #64d2ff;
+            position: relative;
+        }
+        
+        .url-display.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .url-display::before {
+            content: 'URL';
+            position: absolute;
+            top: -8px;
+            left: 16px;
+            background: #1a1a1a;
+            padding: 0 8px;
+            font-size: 12px;
+            color: #8e8e93;
+        }
+        
+        .steps {
+            text-align: left;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .steps.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .step {
+            display: flex;
+            margin-bottom: 16px;
+            align-items: flex-start;
+        }
+        
+        .step-number {
+            width: 26px;
+            height: 26px;
+            background: linear-gradient(135deg, #007aff, #5856d6);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: bold;
+            margin-right: 14px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 10px rgba(0, 122, 255, 0.3);
+        }
+        
+        .step-content {
+            flex: 1;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+            padding-top: 3px;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .success-message {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(52, 199, 89, 0.95);
+            color: white;
+            padding: 16px 28px;
+            border-radius: 14px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 1000;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .success-message.show {
+            opacity: 1;
+        }
+        
+        .security-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 25px;
+            color: #8e8e93;
+            font-size: 13px;
+        }
+        
+        .security-badge i {
+            margin-right: 8px;
+            color: #30d158;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 12px;
+            text-align: center;
+        }
+        
+        .certificate-chain {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+            opacity: 0.7;
+        }
+        
+        .chain-item {
+            width: 6px;
+            height: 6px;
+            background: #007aff;
+            border-radius: 50%;
+            margin: 0 4px;
+            animation: pulse 2s infinite;
+        }
+        
+        .chain-item:nth-child(2) {
+            animation-delay: 0.3s;
+        }
+        
+        .chain-item:nth-child(3) {
+            animation-delay: 0.6s;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="certificate-icon">
+            <i class="fas fa-certificate"></i>
+        </div>
+        
+        <h1 class="app-name">iOS Sign</h1>
+        <p class="app-subtitle">专业P12签名服务</p>
+        
+        <div class="status-badge">
+            <i class="fas fa-shield-alt"></i> 证书状态: 有效
+        </div>
+        
+        <div class="info-card">
+            <h3><i class="fas fa-lock"></i> 安全签名服务</h3>
+            <p>使用企业级P12证书为您的应用提供安全可靠的签名服务，保障应用稳定运行。</p>
+            
+            <ul class="feature-list">
+                <li><i class="fas fa-check"></i> 企业级P12证书签名</li>
+                <li><i class="fas fa-check"></i> 7×24小时服务可用</li>
+                <li><i class="fas fa-check"></i> 自动证书续期</li>
+                <li><i class="fas fa-check"></i> 多重安全验证</li>
+            </ul>
+        </div>
+        
+        <div class="certificate-chain">
+            <div class="chain-item"></div>
+            <div class="chain-item"></div>
+            <div class="chain-item"></div>
+        </div>
+        
+        <div class="wechat-tip" id="wechatTip">
+            <h3><i class="fab fa-weixin"></i> 微信内访问提示</h3>
+            <p>检测到您在微信内打开，请复制下方链接到Safari浏览器中访问，以使用完整签名服务。</p>
+        </div>
+        
+        <div class="url-display" id="urlDisplay">
+            https://ygkj.iosup.cn
+        </div>
+        
+        <button class="btn btn-primary" id="actionButton">
+            <i class="fas fa-certificate"></i> 立即签名
+        </button>
+        
+        <button class="btn btn-secondary" id="copyButton">
+            <i class="fas fa-copy"></i> 复制签名链接
+        </button>
+        
+        <div class="steps" id="steps">
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">点击"复制签名链接"按钮</div>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">打开Safari浏览器</div>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">粘贴链接并访问签名平台</div>
+            </div>
+        </div>
+        
+        <div class="security-badge">
+            <i class="fas fa-shield-alt"></i> 安全连接 · 加密传输
+        </div>
+        
+        <div class="footer">
+            <p>© 2023 iOS Sign · P12签名服务 · 企业证书</p>
+        </div>
+    </div>
+    
+    <div class="success-message" id="successMessage">
+        <i class="fas fa-check-circle"></i> 链接已复制到剪贴板！
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const wechatTip = document.getElementById('wechatTip');
+            const urlDisplay = document.getElementById('urlDisplay');
+            const actionButton = document.getElementById('actionButton');
+            const copyButton = document.getElementById('copyButton');
+            const steps = document.getElementById('steps');
+            const successMessage = document.getElementById('successMessage');
+            
+            // 检测是否在微信中打开
+            function isWechatBrowser() {
+                const ua = navigator.userAgent.toLowerCase();
+                return ua.indexOf('micromessenger') !== -1;
+            }
+            
+            // 初始化页面
+            function initPage() {
+                if (isWechatBrowser()) {
+                    // 微信环境
+                    wechatTip.classList.add('show');
+                    urlDisplay.classList.add('show');
+                    steps.classList.add('show');
+                    
+                    actionButton.innerHTML = '<i class="fas fa-external-link-alt"></i> 前往浏览器签名';
+                    actionButton.addEventListener('click', function() {
+                        copyToClipboard();
+                    });
+                } else {
+                    // 浏览器环境
+                    actionButton.innerHTML = '<i class="fas fa-certificate"></i> 立即签名';
+                    actionButton.addEventListener('click', function() {
+                        window.location.href = 'https://ygkj.iosup.cn';
+                    });
+                    
+                    // 浏览器中隐藏复制按钮和步骤说明
+                    copyButton.style.display = 'none';
+                }
+            }
+            
+            // 复制到剪贴板
+            function copyToClipboard() {
+                const url = 'https://ygkj.iosup.cn';
+                
+                navigator.clipboard.writeText(url).then(() => {
+                    showSuccessMessage();
+                }).catch(err => {
+                    fallbackCopyTextToClipboard(url);
+                });
+            }
+            
+            // 备用复制方法
+            function fallbackCopyTextToClipboard(text) {
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                textArea.style.position = "fixed";
+                textArea.style.opacity = 0;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                
+                try {
+                    const successful = document.execCommand('copy');
+                    if (successful) {
+                        showSuccessMessage();
+                    }
+                } catch (err) {
+                    console.error('复制失败:', err);
+                }
+                
+                document.body.removeChild(textArea);
+            }
+            
+            // 显示成功消息
+            function showSuccessMessage() {
+                successMessage.classList.add('show');
+                setTimeout(() => {
+                    successMessage.classList.remove('show');
+                }, 3000);
+            }
+            
+            // 复制按钮事件
+            copyButton.addEventListener('click', copyToClipboard);
+            
+            // 初始化页面
+            initPage();
+        });
+    </script>
+</body>
+</html>
